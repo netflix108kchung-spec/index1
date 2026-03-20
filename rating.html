@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Đánh giá</title>
+
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #f2f2f2;
+}
+
+.box {
+    margin: 40px auto;
+    padding: 20px;
+    width: 320px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.stars span {
+    font-size: 32px;
+    cursor: pointer;
+    color: gray;
+    transition: 0.2s;
+}
+
+.stars span:hover {
+    transform: scale(1.2);
+}
+
+.stars span.active {
+    color: gold;
+}
+
+button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    border: none;
+    background: #28a745;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #218838;
+}
+
+#avgBox {
+    margin-top: 15px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h2>⭐ Đánh giá trang</h2>
+
+    <div class="stars">
+        <span onclick="rate(1)">★</span>
+        <span onclick="rate(2)">★</span>
+        <span onclick="rate(3)">★</span>
+        <span onclick="rate(4)">★</span>
+        <span onclick="rate(5)">★</span>
+    </div>
+
+    <p id="text">Chưa chọn</p>
+
+    <button onclick="submitRating()">Gửi đánh giá</button>
+
+    <div id="avgBox">
+        ⭐ Trung bình: <span id="avg">0</span> ( <span id="count">0</span> lượt )
+    </div>
+</div>
+
+<script>
+let selected = 0;
+
+// load dữ liệu local
+let ratings = JSON.parse(localStorage.getItem("ratings")) || [];
+
+function rate(num){
+    selected = num;
+
+    let stars = document.querySelectorAll(".stars span");
+    stars.forEach((s,i)=>{
+        s.classList.toggle("active", i < num);
+    });
+
+    document.getElementById("text").innerText = "Bạn chọn " + num + " sao";
+}
+
+function submitRating(){
+    if(selected === 0){
+        alert("Chọn số sao!");
+        return;
+    }
+
+    ratings.push(selected);
+    localStorage.setItem("ratings", JSON.stringify(ratings));
+
+    alert("Đã gửi!");
+    updateAvg();
+}
+
+function updateAvg(){
+    if(ratings.length === 0) return;
+
+    let total = ratings.reduce((a,b)=>a+b,0);
+    let avg = (total / ratings.length).toFixed(1);
+
+    document.getElementById("avg").innerText = avg;
+    document.getElementById("count").innerText = ratings.length;
+}
+
+// chạy khi mở web
+updateAvg();
+</script>
+
+</body>
+</html>
