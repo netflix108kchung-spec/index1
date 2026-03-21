@@ -2,106 +2,125 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Đánh giá + Bình luận</title>
+<title>Đánh giá</title>
 
 <style>
-body { font-family: Arial; text-align: center; background: #f2f2f2; }
-.box { margin: 30px auto; padding: 20px; width: 350px; background: white; border-radius: 10px; }
-.stars span { font-size: 30px; cursor: pointer; color: gray; }
-.stars span.active { color: gold; }
-textarea, input { width: 90%; margin: 5px; padding: 8px; }
-button { padding: 10px; background: green; color: white; border: none; }
-.comment { text-align: left; margin-top: 10px; border-top: 1px solid #ccc; padding-top: 5px; }
-</style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #f2f2f2;
+}
 
+.box {
+    margin: 40px auto;
+    padding: 20px;
+    width: 320px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.stars span {
+    font-size: 32px;
+    cursor: pointer;
+    color: gray;
+    transition: 0.2s;
+}
+
+.stars span:hover {
+    transform: scale(1.2);
+}
+
+.stars span.active {
+    color: gold;
+}
+
+button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    border: none;
+    background: #28a745;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #218838;
+}
+
+#avgBox {
+    margin-top: 15px;
+    font-weight: bold;
+}
+</style>
 </head>
+
 <body>
 
 <div class="box">
-<h2>⭐ Đánh giá</h2>
+    <h2>⭐ Đánh giá trang</h2>
 
-<div class="stars">
-<span onclick="rate(1)">★</span>
-<span onclick="rate(2)">★</span>
-<span onclick="rate(3)">★</span>
-<span onclick="rate(4)">★</span>
-<span onclick="rate(5)">★</span>
+    <div class="stars">
+        <span onclick="rate(1)">★</span>
+        <span onclick="rate(2)">★</span>
+        <span onclick="rate(3)">★</span>
+        <span onclick="rate(4)">★</span>
+        <span onclick="rate(5)">★</span>
+    </div>
+
+    <p id="text">Chưa chọn</p>
+
+    <button onclick="submitRating()">Gửi đánh giá</button>
+
+    <div id="avgBox">
+        ⭐ Trung bình: <span id="avg">0</span> ( <span id="count">0</span> lượt )
+    </div>
 </div>
 
-<p id="text">Chưa chọn</p>
-<button onclick="sendRating()">Gửi đánh giá</button>
-
-<hr>
-
-<h3>💬 Bình luận</h3>
-
-<input id="name" placeholder="Tên bạn">
-<textarea id="comment" placeholder="Nhập bình luận"></textarea>
-<button onclick="sendComment()">Gửi</button>
-
-<div id="list"></div>
-</div>
-
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-// 🔴 DÁN CONFIG CỦA BẠN VÀO ĐÂY
-const firebaseConfig = {
-  apiKey: "AIzaSyBJYx1pCyLgdnYkBoXRC8dfgY4xJ7vkeNQ",
-    authDomain: "nhan-a975e.firebaseapp.com",
-    projectId: "nhan-a975e",
-    storageBucket: "nhan-a975e.firebasestorage.app",
-    messagingSenderId: "442490879373",
-    appId: "1:442490879373:web:c750df4a29d5fb530711c4",
-    measurementId: "G-QT7VZ2SZGY"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
+<script>
 let selected = 0;
 
-window.rate = function(n){
-    selected = n;
-    document.querySelectorAll(".stars span")
-        .forEach((s,i)=> s.classList.toggle("active", i < n));
-    document.getElementById("text").innerText = "Bạn chọn " + n + " sao";
-}
+// load dữ liệu local
+let ratings = JSON.parse(localStorage.getItem("ratings")) || [];
 
-window.sendRating = function(){
-    if(selected === 0) return alert("Chọn sao!");
-    push(ref(db,"ratings"), { star: selected });
-    alert("Đã gửi!");
-}
+function rate(num){
+    selected = num;
 
-window.sendComment = function(){
-    let name = document.getElementById("name").value;
-    let text = document.getElementById("comment").value;
-
-    if(name==""||text=="") return alert("Nhập đủ!");
-
-    push(ref(db,"comments"), { name, text });
-
-    document.getElementById("name").value="";
-    document.getElementById("comment").value="";
-}
-
-// realtime load
-onValue(ref(db,"comments"), snap=>{
-    let data = snap.val();
-    let list = document.getElementById("list");
-    list.innerHTML = "";
-
-    if(!data) return;
-
-    Object.values(data).reverse().forEach(c=>{
-        list.innerHTML += `<div class="comment"><b>${c.name}</b>: ${c.text}</div>`;
+    let stars = document.querySelectorAll(".stars span");
+    stars.forEach((s,i)=>{
+        s.classList.toggle("active", i < num);
     });
-});
+
+    document.getElementById("text").innerText = "Bạn chọn " + num + " sao";
+}
+
+function submitRating(){
+    if(selected === 0){
+        alert("Chọn số sao!");
+        return;
+    }
+
+    ratings.push(selected);
+    localStorage.setItem("ratings", JSON.stringify(ratings));
+
+    alert("Đã gửi!");
+    updateAvg();
+}
+
+function updateAvg(){
+    if(ratings.length === 0) return;
+
+    let total = ratings.reduce((a,b)=>a+b,0);
+    let avg = (total / ratings.length).toFixed(1);
+
+    document.getElementById("avg").innerText = avg;
+    document.getElementById("count").innerText = ratings.length;
+}
+
+// chạy khi mở web
+updateAvg();
 </script>
 
 </body>
-</html>
 </html>
